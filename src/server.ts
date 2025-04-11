@@ -1,19 +1,39 @@
+// import { config } from "dotenv";
+
+import { Server } from 'http';
 import mongoose from 'mongoose';
 import app from './app';
 import config from './app/config';
 
+// const mongoose = require('mongoose');
+
+let server: Server;
+
 async function main() {
   try {
-    console.log('Connecting to MongoDB at:', config.database_url);
-
     await mongoose.connect(config.database_url as string);
-
-    app.listen(config.port, () => {
-      console.log(`App is listening on port ${config.port}`);
+    server = app.listen(config.port, () => {
+      console.log(`App listening on port ${config.port}`);
     });
   } catch (err) {
-    console.error('Error connecting to the database:', err);
+    console.log(err);
   }
 }
 
 main();
+
+process.on('unhandledRejection', () => {
+  console.log(`😈Unhandled Rejection is detecated. shutting down ...`);
+  if (server) {
+    server.close(() => {
+      process.exit(1);
+    });
+  }
+  process.exit(1);
+});
+
+process.on('uncaughtException', () => {
+  console.log(`😈Uncaught Exception is detecated. shutting down ...`);
+
+  process.exit(1);
+});
